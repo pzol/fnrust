@@ -60,7 +60,7 @@ impl<'a, T:Clone> List<T> {
     }
   }
 
-  fn map(&self, f: |&T| -> T) -> List<T> {
+  fn map<U>(&self, f: |&T| -> U) -> List<U> {
     match *self {
       Cons(ref x, ref xs) => Cons(f(x), box xs.map(f)),
       Nil => Nil
@@ -75,12 +75,6 @@ impl<'a, T:Clone> List<T> {
     }
   }
 
-  // def find(&pred)
-  //   match {
-  //     Nil() { Deterministic::Option::None.new }
-  //     Cons(h, t) { if pred.(h) then Deterministic::Option::Some.new(h) else t.find(&pred) end }
-  //   }
-  // end
   fn find(&self, f: |&T| -> bool) -> Option<&T> {
     match *self {
       Nil                    => None,
@@ -88,6 +82,28 @@ impl<'a, T:Clone> List<T> {
       Cons(_, ref xs)        => xs.find(f)
     }
   }
+
+  fn foldl(&self, z: T, f: |&T, &T| -> T) -> T {
+    match *self {
+      Nil => z,
+      Cons(ref x, ref xs) => xs.foldl(f(&z, x), f)
+    }
+  }
+
+  // def foldl1(&fn)
+  //   match {
+  //     Nil() { raise EmptyListError }
+  //     Cons(h, t) { t.foldl(h, &fn)}
+  //   }
+  // end
+
+  // def foldr(start, &fn)
+  //   match {
+  //     Nil() { start }
+  //     # foldr f z (x:xs) = f x (foldr f z xs)
+  //     Cons(h, t) { fn.(h, t.foldr(start, &fn)) }
+  //   }
+  // end
 
 }
 
@@ -117,7 +133,7 @@ fn test_new() {
 fn test_first() {
   let list = Nil.append(1u);
   let    n = list.first().unwrap();
-  assert_eq!(*n, 1u);
+  assert_eq!(*n, 1);
 
   let empty : List<uint> = List::empty();
   assert_eq!(empty.first(), None);
@@ -135,7 +151,7 @@ fn test_last() {
   let list = test_list();
   let last = list.last().unwrap();
 
-  assert_eq!(*last, 21);
+  assert_eq!(*last, 21u);
 }
 
 #[test]
@@ -145,8 +161,8 @@ fn test_tail() {
   let expected = Nil.append(21u).append(15);
   assert_eq!(*tail, expected);
 
-  assert_eq!(*tail.first().unwrap(), 15u);
-  assert_eq!(*tail.last().unwrap(), 21u);
+  assert_eq!(*tail.first().unwrap(), 15);
+  assert_eq!(*tail.last().unwrap(), 21);
 }
 
 #[test]
@@ -173,12 +189,27 @@ fn test_filter() {
   let expected = Nil.append(21u).append(9);
   let actual = list.filter(|&n| n != 15);
   assert_eq!(actual, expected);
+
+  assert!(list.filter(|&n| n == 1).null());
 }
 
 #[test]
 fn test_find() {
   let list   = test_list();
-  let expected = 15u;
-  let actual = list.find(|&n| n == 15u).unwrap();
-  assert_eq!(*actual, expected);
+  let actual = list.find(|&n| n == 15).unwrap();
+  assert_eq!(*actual, 15);
+
+  assert!(list.find(|&n| n == 1).is_none());
+}
+
+#[test]
+fn test_foldl() {
+  let list     = test_list();
+  let actual   = list.foldl(0, |&b: &uint, &a: &uint| b + a);
+
+  assert_eq!(actual, (((0u + 21) + 15) + 9));
+
+  let int_list : List<int> = list.map(|&n| n as int);
+  let actual = int_list.foldl(0i, |&b: &int, &a: &int| b - a);
+  assert_eq!(actual, (((0i - 21) - 15) - 9));
 }
