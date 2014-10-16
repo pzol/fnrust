@@ -83,32 +83,30 @@ impl<'a, T:Clone> List<T> {
     }
   }
 
-  fn foldl(&self, z: T, f: |T, &T|: -> T) -> T {
+  fn foldl(&self, z: T, f: |T, &T| -> T) -> T {
     match *self {
       Nil => z,
       Cons(ref x, ref xs) => xs.foldl(f(z, x), f)
     }
   }
 
-  fn foldr(&self, z: T, f: |T, &T|: -> T) -> T {
+  fn foldl1(&self, f: |T, &T| -> T) -> Option<T> {
     match *self {
-      Nil => z,
-      Cons(ref x, ref xs) => (|x, y| f(x, y))(z, &xs.foldr(x.clone(), f))
-      // { let tmp = xs.foldr(x.clone(), f); f(z, &tmp) }
+      Nil => None,
+      Cons(ref x, ref xs) => Some(xs.foldl(x.clone(), f))
     }
   }
+
+  // fn foldr(&self, z: T, f: |T, &T| -> T) -> T {
+  //   match *self {
+  //     Nil => z,
+  //     Cons(ref x, ref xs) => (|x, y| f(x, y))(z, &xs.foldr(x.clone(), f))
+  //   }
+  // }
   // def foldl1(&fn)
   //   match {
   //     Nil() { raise EmptyListError }
   //     Cons(h, t) { t.foldl(h, &fn)}
-  //   }
-  // end
-
-  // def foldr(start, &fn)
-  //   match {
-  //     Nil() { start }
-  //     # foldr f z (x:xs) = f x (foldr f z xs)
-  //     Cons(h, t) { fn.(h, t.foldr(start, &fn)) }
   //   }
   // end
 
